@@ -175,6 +175,6 @@
     }
   };
   // Uncomment the line below to test with the provided fake data
-  app.updateForecastCard(fakeForecast);
+  // app.updateForecastCard(fakeForecast);
 
 })();
