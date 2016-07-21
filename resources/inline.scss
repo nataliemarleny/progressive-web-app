@@ -208,8 +208,8 @@ body {
       flex-grow: 1;
     }
 
-    .feels-like:before {
-      content: "Feels like: ";
+    .sunset:before {
+      content: "Sunset: ";
       color: #888;
     }
 
@@ -218,8 +218,8 @@ body {
       color: #888;
     }
 
-    .precip:before {
-      content: "Precipitation: ";
+    .sunrise:before {
+      content: "Sunrise: ";
       color: #888;
     }
 
@@ -271,12 +271,12 @@ body {
     &.rain { background-image: url('/images/rain.png'); }
     &.snow { background-image: url('/images/snow.png'); }
     &.sleet { background-image: url('/images/sleet.png'); }
-    &.wind { background-image: url('/images/wind.png'); }
+    &.windy { background-image: url('/images/wind.png'); }
     &.fog { background-image: url('/images/fog.png'); }
     &.cloudy { background-image: url('/images/cloudy.png'); }
     &.partly-cloudy-day { background-image: url('/images/partly-cloudy.png'); }
     &.partly-cloudy-night { background-image: url('/images/partly-cloudy.png'); }
-    &.thunderstorms { background-image: url('/images/thunderstorms.png'); }
+    &.thunderstorms { background-image: url('/images/thunderstorm.png'); }
   }
 }
 
