@@ -37,7 +37,6 @@
     var key = selected.value;
     var label = selected.textContent;
     app.getForecast(key, label);
-    app.selectedCities.push({key: key, label: label});
     app.toggleAddDialog(false);
   });
 
@@ -65,6 +64,13 @@
   // Updates a weather card with the latest weather forecast. If the card
   // doesn't already exist, it's cloned from the template.
   app.updateForecastCard = function(data) {
+    var dataLastUpdated = new Date(data.created);
+    var sunrise = data.channel.astronomy.sunrise;
+    var sunset = data.channel.astronomy.sunset;
+    var current = data.channel.item.condition;
+    var humidity = data.channel.atmosphere.humidity;
+    var wind = data.channel.wind;
+
     var card = app.visibleCards[data.key];
     if (!card) {
       card = app.cardTemplate.cloneNode(true);
@@ -74,36 +80,47 @@
       app.container.appendChild(card);
       app.visibleCards[data.key] = card;
     }
-    card.querySelector('.description').textContent = data.currently.summary;
-    card.querySelector('.date').textContent =
-      new Date(data.currently.time * 1000);
-    card.querySelector('.current .icon').classList.add(data.currently.icon);
+
+    // Verifies the data provide is newer than what's already visible
+    // on the card, if it's not bail, if it is, continue and update the
+    // time saved in the card
+    var cardLastUpdatedElem = card.querySelector('.card-last-updated');
+    var cardLastUpdated = cardLastUpdatedElem.textContent;
+    if (cardLastUpdated) {
+      cardLastUpdated = new Date(cardLastUpdated);
+      // Bail if the card has more recent data then the data
+      if (dataLastUpdated.getTime() < cardLastUpdated.getTime()) {
+        return;
+      }
+    }
+    cardLastUpdatedElem.textContent = data.created;
+
+    card.querySelector('.description').textContent = current.text;
+    card.querySelector('.date').textContent = current.date;
+    card.querySelector('.current .icon').classList.add(app.getIconClass(current.code));
     card.querySelector('.current .temperature .value').textContent =
-      Math.round(data.currently.temperature);
-    card.querySelector('.current .feels-like .value').textContent =
-      Math.round(data.currently.apparentTemperature);
-    card.querySelector('.current .precip').textContent =
-      Math.round(data.currently.precipProbability * 100) + '%';
+      Math.round(current.temp);
+    card.querySelector('.current .sunrise').textContent = sunrise;
+    card.querySelector('.current .sunset').textContent = sunset;
     card.querySelector('.current .humidity').textContent =
-      Math.round(data.currently.humidity * 100) + '%';
+      Math.round(humidity) + '%';
     card.querySelector('.current .wind .value').textContent =
-      Math.round(data.currently.windSpeed);
-    card.querySelector('.current .wind .direction').textContent =
-      data.currently.windBearing;
+      Math.round(wind.speed);
+    card.querySelector('.current .wind .direction').textContent = wind.direction;
     var nextDays = card.querySelectorAll('.future .oneday');
     var today = new Date();
     today = today.getDay();
     for (var i = 0; i < 7; i++) {
       var nextDay = nextDays[i];
-      var daily = data.daily.data[i];
+      var daily = data.channel.item.forecast[i];
       if (daily && nextDay) {
         nextDay.querySelector('.date').textContent =
           app.daysOfWeek[(i + today) % 7];
-        nextDay.querySelector('.icon').classList.add(daily.icon);
+        nextDay.querySelector('.icon').classList.add(app.getIconClass(daily.code));
         nextDay.querySelector('.temp-high .value').textContent =
-          Math.round(daily.temperatureMax);
+          Math.round(daily.high);
         nextDay.querySelector('.temp-low .value').textContent =
-          Math.round(daily.temperatureMin);
+          Math.round(daily.low);
       }
     }
     if (app.isLoading) {
@@ -120,20 +137,33 @@
    *
    ****************************************************************************/
 
-  // Gets a forecast for a specific city and update the card with the data
+  /*
+   * Gets a forecast for a specific city and updates the card with the data.
+   * getForecast() first checks if the weather data is in the cache. If so,
+   * then it gets that data and populates the card with the cached data.
+   * Then, getForecast() goes to the network for fresh data. If the network
+   * request goes through, then the card gets updated a second time with the
+   * freshest data.
+   */
   app.getForecast = function(key, label) {
-    var url = 'https://publicdata-weather.firebaseio.com/';
-    url += key + '.json';
-    // Make the XHR to get the data, then update the card
+    var statement = 'select * from weather.forecast where woeid=' + key;
+    var url = 'https://query.yahooapis.com/v1/public/yql?format=json&q=' +
+        statement;
+    // Fetch the latest data.
     var request = new XMLHttpRequest();
     request.onreadystatechange = function() {
       if (request.readyState === XMLHttpRequest.DONE) {
         if (request.status === 200) {
           var response = JSON.parse(request.response);
-          response.key = key;
-          response.label = label;
-          app.updateForecastCard(response);
+          var results = response.query.results;
+          results.key = key;
+          results.label = label;
+          results.created = response.query.created;
+          app.updateForecastCard(results);
         }
+      } else {
+        // Return the initial weather forecast since no data is available.
+        app.updateForecastCard(initialWeatherForecast);
       }
     };
     request.open('GET', url);
@@ -148,33 +178,110 @@
     });
   };
 
-  var fakeForecast = {
-    key: 'newyork',
+  app.getIconClass = function(weatherCode) {
+    // Weather codes: https://developer.yahoo.com/weather/documentation.html#codes
+    weatherCode = parseInt(weatherCode);
+    switch (weatherCode) {
+      case 25: // cold
+      case 32: // sunny
+      case 33: // fair (night)
+      case 34: // fair (day)
+      case 36: // hot
+      case 3200: // not available
+        return 'clear-day';
+      case 0: // tornado
+      case 1: // tropical storm
+      case 2: // hurricane
+      case 6: // mixed rain and sleet
+      case 8: // freezing drizzle
+      case 9: // drizzle
+      case 10: // freezing rain
+      case 11: // showers
+      case 12: // showers
+      case 17: // hail
+      case 35: // mixed rain and hail
+      case 40: // scattered showers
+        return 'rain';
+      case 3: // severe thunderstorms
+      case 4: // thunderstorms
+      case 37: // isolated thunderstorms
+      case 38: // scattered thunderstorms
+      case 39: // scattered thunderstorms (not a typo)
+      case 45: // thundershowers
+      case 47: // isolated thundershowers
+        return 'thunderstorms';
+      case 5: // mixed rain and snow
+      case 7: // mixed snow and sleet
+      case 13: // snow flurries
+      case 14: // light snow showers
+      case 16: // snow
+      case 18: // sleet
+      case 41: // heavy snow
+      case 42: // scattered snow showers
+      case 43: // heavy snow
+      case 46: // snow showers
+        return 'snow';
+      case 15: // blowing snow
+      case 19: // dust
+      case 20: // foggy
+      case 21: // haze
+      case 22: // smoky
+        return 'fog';
+      case 24: // windy
+      case 23: // blustery
+        return 'windy';
+      case 26: // cloudy
+      case 27: // mostly cloudy (night)
+      case 28: // mostly cloudy (day)
+      case 31: // clear (night)
+        return 'cloudy';
+      case 29: // partly cloudy (night)
+      case 30: // partly cloudy (day)
+      case 44: // partly cloudy
+        return 'partly-cloudy-day';
+    }
+  };
+
+  /*
+   * Fake weather data that is presented when the user first uses the app,
+   * or when the user has not saved any cities. See startup code for more
+   * discussion.
+   */
+  var initialWeatherForecast = {
+    key: '2459115',
     label: 'New York, NY',
-    currently: {
-      time: 1453489481,
-      summary: 'Clear',
-      icon: 'partly-cloudy-day',
-      temperature: 30,
-      apparentTemperature: 21,
-      precipProbability: 0.80,
-      humidity: 0.17,
-      windBearing: 125,
-      windSpeed: 1.52
-    },
-    daily: {
-      data: [
-        {icon: 'clear-day', temperatureMax: 36, temperatureMin: 31},
-        {icon: 'rain', temperatureMax: 34, temperatureMin: 28},
-        {icon: 'snow', temperatureMax: 31, temperatureMin: 17},
-        {icon: 'sleet', temperatureMax: 38, temperatureMin: 31},
-        {icon: 'fog', temperatureMax: 40, temperatureMin: 36},
-        {icon: 'wind', temperatureMax: 35, temperatureMin: 29},
-        {icon: 'partly-cloudy-day', temperatureMax: 42, temperatureMin: 40}
-      ]
+    created: '2016-07-22T01:00:00Z',
+    channel: {
+      astronomy: {
+        sunrise: "5:43 am",
+        sunset: "8:21 pm"
+      },
+      item: {
+        condition: {
+          text: "Windy",
+          date: "Thu, 21 Jul 2016 09:00 PM EDT",
+          temp: 56,
+          code: 24
+        },
+        forecast: [
+          {code: 44, high: 86, low: 70},
+          {code: 44, high: 94, low: 73},
+          {code: 4, high: 95, low: 78},
+          {code: 24, high: 75, low: 89},
+          {code: 24, high: 89, low: 77},
+          {code: 44, high: 92, low: 79},
+          {code: 44, high: 89, low: 77}
+        ]
+      },
+      atmosphere: {
+        humidity: 56
+      },
+      wind: {
+        speed: 25,
+        direction: 195
+      }
     }
   };
   // Uncomment the line below to test with the provided fake data
-  // app.updateForecastCard(fakeForecast);
-
+  app.updateForecastCard(initialWeatherForecast);
 })();

@@ -263,14 +263,14 @@ body {
     -webkit-flex-grow: 1;
         -ms-flex-positive: 1;
             flex-grow: 1; }
-  .weather-forecast .current .feels-like:before {
-    content: "Feels like: ";
+  .weather-forecast .current .sunset:before {
+    content: "Sunset: ";
     color: #888; }
   .weather-forecast .current .wind:before {
     content: "Wind: ";
     color: #888; }
-  .weather-forecast .current .precip:before {
-    content: "Precipitation: ";
+  .weather-forecast .current .sunrise:before {
+    content: "Sunrise: ";
     color: #888; }
   .weather-forecast .current .humidity:before {
     content: "Humidity: ";
@@ -316,7 +316,7 @@ body {
     background-image: url("/images/snow.png"); }
   .weather-forecast .icon.sleet {
     background-image: url("/images/sleet.png"); }
-  .weather-forecast .icon.wind {
+  .weather-forecast .icon.windy {
     background-image: url("/images/wind.png"); }
   .weather-forecast .icon.fog {
     background-image: url("/images/fog.png"); }
@@ -327,7 +327,7 @@ body {
   .weather-forecast .icon.partly-cloudy-night {
     background-image: url("/images/partly-cloudy.png"); }
   .weather-forecast .icon.thunderstorms {
-    background-image: url("/images/thunderstorms.png"); }
+    background-image: url("/images/thunderstorm.png"); }
 
 @media (max-width: 450px) {
   .weather-forecast .date, .weather-forecast .description {
