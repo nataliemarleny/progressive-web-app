@@ -50,7 +50,9 @@
     var selected = select.options[select.selectedIndex];
     var key = selected.value;
     var label = selected.textContent;
+    // TODO init the app.selectedCities array here
     app.getForecast(key, label);
+    // TODO push the selected city to the array and save here
     app.toggleAddDialog(false);
   });
 
@@ -163,6 +165,8 @@
     var statement = 'select * from weather.forecast where woeid=' + key;
     var url = 'https://query.yahooapis.com/v1/public/yql?format=json&q=' +
         statement;
+    // TODO add cache logic here
+
     // Fetch the latest data.
     var request = new XMLHttpRequest();
     request.onreadystatechange = function() {
@@ -191,6 +195,8 @@
       app.getForecast(key);
     });
   };
+
+  // TODO add saveSelectedCities function here
 
   app.getIconClass = function(weatherCode) {
     // Weather codes: https://developer.yahoo.com/weather/documentation.html#codes
@@ -296,6 +302,10 @@
       }
     }
   };
-  // Uncomment the line below to test with the provided fake data
+  // TODO uncomment line below to test app with fake data
   app.updateForecastCard(initialWeatherForecast);
+
+  // TODO add startup code here
+
+  // TODO add service worker code here
 })();
