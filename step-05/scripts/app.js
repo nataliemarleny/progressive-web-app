@@ -168,6 +168,8 @@
     var statement = 'select * from weather.forecast where woeid=' + key;
     var url = 'https://query.yahooapis.com/v1/public/yql?format=json&q=' +
         statement;
+    // TODO add cache logic here
+
     // Fetch the latest data.
     var request = new XMLHttpRequest();
     request.onreadystatechange = function() {
@@ -197,6 +199,7 @@
     });
   };
 
+  // TODO add saveSelectedCities function here
   // Save list of cities to localStorage.
   app.saveSelectedCities = function() {
     var selectedCities = JSON.stringify(app.selectedCities);
@@ -307,6 +310,8 @@
       }
     }
   };
+  // TODO uncomment line below to test app with fake data
+  // app.updateForecastCard(initialWeatherForecast);
 
   /************************************************************************
    *
@@ -319,6 +324,7 @@
    *   SimpleDB (https://gist.github.com/inexorabletash/c8069c042b734519680c)
    ************************************************************************/
 
+  // TODO add startup code here
   app.selectedCities = localStorage.selectedCities;
   if (app.selectedCities) {
     app.selectedCities = JSON.parse(app.selectedCities);
@@ -337,4 +343,6 @@
     ];
     app.saveSelectedCities();
   }
+
+  // TODO add service worker code here
 })();
