@@ -1,3 +1,4 @@
+
 // Copyright 2016 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -199,8 +200,8 @@
     });
   };
 
-  // Extra Credit: Replace localStorage implementation wit idb, check out localForage as a simple wrapper to idb
-  // Save list of cities to localStorage
+  // TODO add saveSelectedCities function here
+  // Save list of cities to localStorage.
   app.saveSelectedCities = function() {
     var selectedCities = JSON.stringify(app.selectedCities);
     localStorage.selectedCities = selectedCities;
@@ -313,7 +314,8 @@
   // TODO uncomment line below to test app with fake data
   // app.updateForecastCard(initialWeatherForecast);
 
-/*
+  /************************************************************************
+   *
    * Code required to start the app
    *
    * NOTE: To simplify this codelab, we've used localStorage.
@@ -321,8 +323,9 @@
    *   implications. It should not be used in production applications!
    *   Instead, check out IDB (https://www.npmjs.com/package/idb) or
    *   SimpleDB (https://gist.github.com/inexorabletash/c8069c042b734519680c)
-*/
+   ************************************************************************/
 
+  // TODO add startup code here
   app.selectedCities = localStorage.selectedCities;
   if (app.selectedCities) {
     app.selectedCities = JSON.parse(app.selectedCities);
@@ -331,16 +334,21 @@
     });
   } else {
     /* The user is using the app for the first time, or the user has not
-    * saved ny cities, so show the user some fake data. A real app in this
-    * scenario could guess the user's location via IP lookup and then inject
-    * that data into the page.
-    */
-   app.updateForecastCard(initialWeatherForecast);
-   app.selectedCities = [
-     {key: initialWeatherForecast.key, label: initialWeatherForecast.label}
-   ];
-   app.saveSelectedCities();
+     * saved any cities, so show the user some fake data. A real app in this
+     * scenario could guess the user's location via IP lookup and then inject
+     * that data into the page.
+     */
+    app.updateForecastCard(initialWeatherForecast);
+    app.selectedCities = [
+      {key: initialWeatherForecast.key, label: initialWeatherForecast.label}
+    ];
+    app.saveSelectedCities();
   }
 
   // TODO add service worker code here
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+             .register('./service-worker.js')
+             .then(function() { console.log('Service Worker Registered'); });
+  }
 })();
